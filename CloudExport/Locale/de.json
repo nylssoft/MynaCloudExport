@@ -1,0 +1,15 @@
+﻿{
+  "DIARY": "Tagebuch",
+  "ERROR": "FEHLER",
+  "ERROR_DECRYPT": "Inhalt kann nicht entschlüsselt werden.",
+  "INFO": "INFO",
+  "INFO_FILE_EXISTS_1": "Datei {0} existiert bereits. Export wird übersprungen.",
+  "INFO_READ_DOCUMENT_1": "Lese Dokument '{0}'.",
+  "INFO_READ_ENTRY_1": "Lese Tagebucheintrag für {0}.",
+  "INFO_READ_NOTE_1": "Lese Notiz '{0}'.",
+  "INFO_USAGE": "Benutzung:",
+  "INFO_WRITE_FILE_1": "Schreibe Datei {0}.",
+  "INFO_WRITE_FILE_1_2": "Schreibe Datei {0} ({1} Bytes).",
+  "NOTES": "Notizen",
+  "WARNING": "WARNUNG"
+}

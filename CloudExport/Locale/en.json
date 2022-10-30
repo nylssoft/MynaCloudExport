@@ -1,0 +1,15 @@
+﻿{
+  "DIARY": "Diary",
+  "ERROR": "ERROR",
+  "ERROR_DECRYPT": "Cannot decrypt content.",
+  "INFO": "INFO",
+  "INFO_FILE_EXISTS_1": "File {0} already exists. Export skipped.",
+  "INFO_READ_DOCUMENT_1": "Read document '{0}'.",
+  "INFO_READ_ENTRY_1": "Read diary entry for {0}.",
+  "INFO_READ_NOTE_1": "Read note '{0}'.",
+  "INFO_USAGE": "Usage:",
+  "INFO_WRITE_FILE_1": "Write file {0}.",
+  "INFO_WRITE_FILE_1_2": "Write file {0} ({1} bytes).",
+  "NOTES": "Notes",
+  "WARNING": "WARNING"
+}

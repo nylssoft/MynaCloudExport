@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "CloudExport": {
+      "commandName": "Project",
+      "commandLineArgs": "--user=nielstest1 --locale=de-DE"
+    }
+  }
+}
