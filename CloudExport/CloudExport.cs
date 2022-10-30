@@ -152,7 +152,7 @@ namespace CloudExport
             }
         }
 
-        public static async Task ExportDiaryAsyc(string exportDir, string token, string key, bool overwrit, string salt, CultureInfo ci)
+        public static async Task ExportDiaryAsync(string exportDir, string token, string key, bool overwrit, string salt, CultureInfo ci)
         {
             exportDir = Path.Combine(exportDir, ConsoleUtils.Translate("DIARY"));
             Directory.CreateDirectory(exportDir);

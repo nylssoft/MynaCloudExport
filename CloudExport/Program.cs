@@ -36,13 +36,13 @@ namespace CloudExport
                 if (string.IsNullOrEmpty(subcmd) || subcmd != "all" && subcmd != "documents" && subcmd != "notes" && subcmd != "diary")
                 {
                     Console.WriteLine(ConsoleUtils.Translate("INFO_USAGE"));
-                    Console.WriteLine("CloudExport [all|documents|notes|diary]");
+                    Console.WriteLine("CloudExport {all|documents|notes|diary}");
                     Console.WriteLine(" [--exportdir=<directory>]");
                     Console.WriteLine(" [--user=<username>]");
                     Console.WriteLine(" [--password=<password>]");
                     Console.WriteLine(" [--code=<code>]");
                     Console.WriteLine(" [--key=<key>]");
-                    Console.WriteLine(" [--locale={de-DE|en-US}]");
+                    Console.WriteLine(" [--locale={de-DE|en-US|...}]");
                     Console.WriteLine(" [--overwrite]");
                     Console.WriteLine(" [--verbose]");
                     return;
@@ -70,7 +70,7 @@ namespace CloudExport
                 }
                 if (subcmd == "all" || subcmd == "diary")
                 {
-                    await CloudExport.ExportDiaryAsyc(exportDir, token, key, overwrit, userModel.passwordManagerSalt, new CultureInfo(locale));
+                    await CloudExport.ExportDiaryAsync(exportDir, token, key, overwrit, userModel.passwordManagerSalt, new CultureInfo(locale));
                 }
             }
             catch (Exception ex)
