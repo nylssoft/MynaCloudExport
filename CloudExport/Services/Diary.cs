@@ -1,5 +1,5 @@
 ﻿/*
-    Myna Password Reader MAUI
+    Myna Cloud Export
     Copyright (C) 2022 Niels Stockfleth
 
     This program is free software: you can redistribute it and/or modify
@@ -15,7 +15,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-namespace PasswordReader.Services
+namespace CloudExport.Services
 {
     public class Diary
     {

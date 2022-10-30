@@ -1,5 +1,5 @@
 ﻿/*
-    Myna Password Reader MAUI
+    Myna Cloud Export
     Copyright (C) 2022 Niels Stockfleth
 
     This program is free software: you can redistribute it and/or modify
@@ -21,7 +21,7 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 
-namespace PasswordReader.Services
+namespace CloudExport.Services
 {
     public class RestClient
     {
@@ -45,7 +45,7 @@ namespace PasswordReader.Services
                 var localeUrl = await httpClient.GetFromJsonAsync<string>($"api/pwdman/locale/url/{locale}");
                 translateMap = await httpClient.GetFromJsonAsync<Dictionary<string, string>>(localeUrl);
                 if (translateMap == null) throw new ArgumentException("Invalid response");
-                var localeFile = Path.Combine(AppContext.BaseDirectory, "locale", $"{locale}.json");
+                var localeFile = Path.Combine(AppContext.BaseDirectory, "Locale", $"{locale}.json");
                 if (File.Exists(localeFile))
                 {
                     var txt = await File.ReadAllTextAsync(localeFile);

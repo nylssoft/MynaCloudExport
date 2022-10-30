@@ -1,5 +1,5 @@
 ﻿/*
-    Myna Password Reader MAUI
+    Myna Cloud Export
     Copyright (C) 2022 Niels Stockfleth
 
     This program is free software: you can redistribute it and/or modify
@@ -18,7 +18,7 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace APIServer.PasswordGenerator
+namespace CloudExport.Services
 {
     public sealed class PwdGen
     {
