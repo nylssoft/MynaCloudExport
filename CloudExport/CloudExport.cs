@@ -213,7 +213,7 @@ namespace CloudExport
 
         private static async Task<string> GetUUID()
         {
-            var uuidFile = Path.Combine(GetCloudExportDirectory(), "uuid.txt");
+            var uuidFile = Path.Combine(GetCloudExportDirectory(), "clientinfo.txt");
             string uuid;
             if (!File.Exists(uuidFile))
             {
