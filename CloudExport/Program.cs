@@ -32,8 +32,8 @@ namespace CloudExport
                 {
                     ConsoleUtils.Verbose = true;
                 }
-                string? subcmd = cmd.Get("");
-                if (string.IsNullOrEmpty(subcmd) || subcmd != "all" && subcmd != "documents" && subcmd != "notes" && subcmd != "diary")
+                string? subcmd = cmd.Get();
+                if (subcmd != "all" && subcmd != "documents" && subcmd != "notes" && subcmd != "diary")
                 {
                     Console.WriteLine(ConsoleUtils.Translate("INFO_USAGE"));
                     Console.WriteLine("CloudExport {all|documents|notes|diary}");

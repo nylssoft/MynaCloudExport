@@ -32,7 +32,7 @@ namespace CloudExport
             return paramDict.ContainsKey(param);
         }
 
-        public string? Get(string param)
+        public string? Get(string param = "")
         {
             paramDict.TryGetValue(param, out var l);
             if (l != null && l.Count > 0)
