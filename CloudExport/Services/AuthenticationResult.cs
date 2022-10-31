@@ -20,8 +20,11 @@ namespace CloudExport.Services
     public class AuthenticationResult
     {
         public string token { get; set; } = string.Empty;
+
         public bool requiresPass2 { get; set; }
+
         public string longLivedToken { get; set; } = string.Empty;
+
         public string username { get; set; } = string.Empty;
     }
 }

@@ -103,7 +103,7 @@ namespace CloudExport.Services
             });
             await EnsureSuccessAsync(response);
             var ret = await response.Content.ReadFromJsonAsync<AuthenticationResult>();
-            if (ret == null) throw new ArgumentException("Ungültige Server-Antwort.");
+            if (ret == null) throw new ArgumentException("Invalid response");
             return ret;
         }
 
@@ -115,18 +115,20 @@ namespace CloudExport.Services
             var response = await httpClient.GetAsync("api/pwdman/user");
             await EnsureSuccessAsync(response);
             var ret = await response.Content.ReadFromJsonAsync<UserModel>();
-            if (ret == null) throw new ArgumentException("Ungültige Server-Antwort.");
+            if (ret == null) throw new ArgumentException("Invalid response");
             return ret;
         }
 
-        public static async Task<AuthenticationResult?> AuthenticateLLTokenAsync(string lltoken)
+        public static async Task<AuthenticationResult> AuthenticateLLTokenAsync(string lltoken)
         {
             if (httpClient == null) throw new ArgumentException("RestClient not initialized.");
             httpClient.DefaultRequestHeaders.Remove("token");
             httpClient.DefaultRequestHeaders.Add("token", lltoken);
             var response = await httpClient.GetAsync("api/pwdman/auth/lltoken");
             await EnsureSuccessAsync(response);
-            return await response.Content.ReadFromJsonAsync<AuthenticationResult>();
+            var ret = await response.Content.ReadFromJsonAsync<AuthenticationResult>();
+            if (ret == null) throw new ArgumentException("Invalid response");
+            return ret;
         }
 
         public static async Task<AuthenticationResult> AuthenticatePass2Async(string token, string totp)
@@ -137,7 +139,7 @@ namespace CloudExport.Services
             var response = await httpClient.PostAsJsonAsync("api/pwdman/auth2", totp);
             await EnsureSuccessAsync(response);
             var ret = await response.Content.ReadFromJsonAsync<AuthenticationResult>();
-            if (ret == null) throw new ArgumentException("Invalid server response.");
+            if (ret == null) throw new ArgumentException("Invalid response");
             return ret;
         }
 
@@ -161,24 +163,28 @@ namespace CloudExport.Services
             return await response.Content.ReadFromJsonAsync<string>();
         }
 
-        public static async Task<List<Note>?> GetNotesAsync(string token)
+        public static async Task<List<Note>> GetNotesAsync(string token)
         {
             if (httpClient == null) throw new ArgumentException("RestClient not initialized.");
             httpClient.DefaultRequestHeaders.Remove("token");
             httpClient.DefaultRequestHeaders.Add("token", token);
             var response = await httpClient.GetAsync("api/notes/note");
             await EnsureSuccessAsync(response);
-            return await response.Content.ReadFromJsonAsync<List<Note>>();
+            var ret = await response.Content.ReadFromJsonAsync<List<Note>>();
+            if (ret == null) throw new ArgumentException("Invalid response");
+            return ret;
         }
 
-        public static async Task<Note?> GetNoteAsync(string token, long id)
+        public static async Task<Note> GetNoteAsync(string token, long id)
         {
             if (httpClient == null) throw new ArgumentException("RestClient not initialized.");
             httpClient.DefaultRequestHeaders.Remove("token");
             httpClient.DefaultRequestHeaders.Add("token", token);
             var response = await httpClient.GetAsync($"api/notes/note/{id}");
             await EnsureSuccessAsync(response);
-            return await response.Content.ReadFromJsonAsync<Note>();
+            var ret = await response.Content.ReadFromJsonAsync<Note>();
+            if (ret == null) throw new ArgumentException("Invalid response");
+            return ret;
         }
 
         public static async Task<long> CreateNewNoteAsync(string token, string title)
@@ -218,7 +224,7 @@ namespace CloudExport.Services
             return lastModifiedUtc;
         }
 
-        public static async Task<List<int>?> GetDiaryDaysAsync(string token, int year, int month)
+        public static async Task<List<int>> GetDiaryDaysAsync(string token, int year, int month)
         {
             if (httpClient == null) throw new ArgumentException("RestClient not initialized.");
             var dt = new DateTime(year, month, 1);
@@ -227,10 +233,12 @@ namespace CloudExport.Services
             httpClient.DefaultRequestHeaders.Add("token", token);
             var response = await httpClient.GetAsync($"api/diary/day?date={iso8601}");
             await EnsureSuccessAsync(response);
-            return await response.Content.ReadFromJsonAsync<List<int>>();
+            var ret = await response.Content.ReadFromJsonAsync<List<int>>();
+            if (ret == null) throw new ArgumentException("Invalid response");
+            return ret;
         }
 
-        public static async Task<Diary?> GetDiaryAsync(string token, int year, int month, int day)
+        public static async Task<Diary> GetDiaryAsync(string token, int year, int month, int day)
         {
             if (httpClient == null) throw new ArgumentException("RestClient not initialized.");
             var dt = new DateTime(year, month, day);
@@ -239,7 +247,9 @@ namespace CloudExport.Services
             httpClient.DefaultRequestHeaders.Add("token", token);
             var response = await httpClient.GetAsync($"api/diary/entry?date={iso8601}");
             await EnsureSuccessAsync(response);
-            return await response.Content.ReadFromJsonAsync<Diary>();
+            var ret = await response.Content.ReadFromJsonAsync<Diary>();
+            if (ret == null) throw new ArgumentException("Invalid response");
+            return ret;
         }
 
         public static async Task SaveDiaryAsync(string token, int year, int month, int day, string entry)
@@ -308,6 +318,8 @@ namespace CloudExport.Services
             await EnsureSuccessAsync(response);
         }
 
+        // --- private
+
         private static async Task EnsureSuccessAsync(HttpResponseMessage response)
         {
             if (response.StatusCode != System.Net.HttpStatusCode.OK)
@@ -315,7 +327,7 @@ namespace CloudExport.Services
                 var problemDetails = await response.Content.ReadFromJsonAsync<ProblemDetails>();
                 if (problemDetails == null)
                 {
-                    throw new ArgumentException("Invalid server response.");
+                    throw new ArgumentException("Invalid response");
                 }
                 var message = Translate(problemDetails.title);
                 if (problemDetails.title == "ERROR_INVALID_TOKEN")

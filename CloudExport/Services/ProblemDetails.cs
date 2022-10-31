@@ -20,6 +20,7 @@ namespace CloudExport.Services
     public class ProblemDetails
     {
         public string title { get; set; } = string.Empty;
+
         public int status { get; set; }
     }
 }

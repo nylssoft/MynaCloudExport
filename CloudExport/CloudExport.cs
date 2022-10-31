@@ -20,7 +20,7 @@ namespace CloudExport
             name = Path.GetFileNameWithoutExtension(name);
             if (name.Length > 32)
             {
-                name = name[..32];
+                name = $"{name[..32]}-{name.GetHashCode()}";
             }
             StringBuilder sb = new();
             int idx = 0;
@@ -49,21 +49,12 @@ namespace CloudExport
         {
             var uuid = await GetUUID();
             ClientInfo clientInfo = new() { Name = "CloudExport", UUID = uuid };
-            if (user == null)
-            {
-                user = ConsoleUtils.Read("LABEL_NAME");
-            }
-            if (pwd == null)
-            {
-                pwd = ConsoleUtils.ReadSecret("LABEL_PWD");
-            }
+            user ??= ConsoleUtils.Read("LABEL_NAME");
+            pwd ??= ConsoleUtils.ReadSecret("LABEL_PWD");
             var authResult = await RestClient.AuthenticateAsync(user, pwd, clientInfo, GetShortLocale(locale));
             if (authResult.requiresPass2)
             {
-                if (code == null)
-                {
-                    code = ConsoleUtils.ReadSecret("LABEL_SEC_KEY");
-                }
+                code ??= ConsoleUtils.ReadSecret("LABEL_SEC_KEY");
                 authResult = await RestClient.AuthenticatePass2Async(authResult.token, code);
             }
             var token = authResult.token;
@@ -110,7 +101,14 @@ namespace CloudExport
                             continue;
                         }
                         ConsoleUtils.WriteInfo("INFO_WRITE_FILE_1_2", docPath, $"{doc.size}");
-                        await File.WriteAllBytesAsync(docPath, Decrypt(content, key, salt));
+                        if (!string.IsNullOrEmpty(doc.accessRole))
+                        {
+                            await File.WriteAllBytesAsync(docPath, content);
+                        }
+                        else
+                        {
+                            await File.WriteAllBytesAsync(docPath, Decrypt(content, key, salt));
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -205,7 +203,7 @@ namespace CloudExport
             var idx = locale.IndexOf("-");
             if (idx > 0)
             {
-                locale = locale[..(idx)];
+                locale = locale[..idx];
             }
             locale = locale.ToLowerInvariant();
             return locale;

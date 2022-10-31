@@ -20,6 +20,7 @@ namespace CloudExport.Services
     public class Diary
     {
         public string entry { get; set; } = string.Empty;
+
         public DateTime? date { get; set; }
     }
 }

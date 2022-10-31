@@ -20,11 +20,17 @@ namespace CloudExport.Services
     public class DocumentItem
     {
         public long id { get; set; }
+
         public long? parentId { get; set; }
+
         public string name { get; set; } = string.Empty;
+
         public long size { get; set; }
+
         public string type { get; set; } = string.Empty;
+
         public int children { get; set; }
+
         public string accessRole { get; set; } = string.Empty;
     }
 }

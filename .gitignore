@@ -1,3 +1,4 @@
 /.vs
 /CloudExport/bin
 /CloudExport/obj
+*.user

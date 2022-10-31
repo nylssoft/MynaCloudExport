@@ -27,6 +27,10 @@ namespace CloudExport
             {
                 CommandLine cmd = new(args);
                 string locale = cmd.Get("locale", CultureInfo.CurrentCulture.TwoLetterISOLanguageName);
+                if (!locale.StartsWith("de-") && !locale.StartsWith("en-"))
+                {
+                    locale = "en-US";
+                }
                 await CloudExport.Init(locale);
                 if (cmd.Has("verbose"))
                 {
