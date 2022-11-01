@@ -7,7 +7,7 @@
   "INFO_READ_DOCUMENT_1": "Lese Dokument '{0}'.",
   "INFO_READ_ENTRY_1": "Lese Tagebucheintrag für {0}.",
   "INFO_READ_NOTE_1": "Lese Notiz '{0}'.",
-  "INFO_USAGE": "Benutzung:",
+  "INFO_USAGE": "Exportiert Dokumente, Notizen und das Tagebuch aus dem Portal stockfleth.eu.\nVersion 1.0.1\n",
   "INFO_WRITE_FILE_1": "Schreibe Datei {0}.",
   "INFO_WRITE_FILE_1_2": "Schreibe Datei {0} ({1} Bytes).",
   "NOTES": "Notizen",
