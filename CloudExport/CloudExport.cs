@@ -18,9 +18,10 @@ namespace CloudExport
         {
             var ext = Path.GetExtension(name);
             name = Path.GetFileNameWithoutExtension(name);
-            if (name.Length > 32)
+            if (name.Length > 40)
             {
-                name = $"{name[..32]}-{name.GetHashCode()}";
+                var shorthash = Convert.ToHexString(MD5.HashData(Encoding.UTF8.GetBytes(name)))[..8]; // add only 8 characters (4 bytes, MD5 hash has 8 bytes)
+                name = $"{name[..31]}_{shorthash}";
             }
             StringBuilder sb = new();
             int idx = 0;
