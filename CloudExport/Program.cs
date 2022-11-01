@@ -26,37 +26,34 @@ namespace CloudExport
             try
             {
                 CommandLine cmd = new(args);
-                string locale = cmd.Get("locale", CultureInfo.CurrentCulture.TwoLetterISOLanguageName);
+                string locale = cmd.GetSingleParameter("locale", CultureInfo.CurrentCulture.TwoLetterISOLanguageName);
                 if (!locale.StartsWith("de-") && !locale.StartsWith("en-"))
                 {
                     locale = "en-US";
                 }
                 await CloudExport.Init(locale);
-                if (cmd.Has("verbose"))
-                {
-                    ConsoleUtils.Verbose = true;
-                }
-                string? subcmd = cmd.Get();
-                if (subcmd != "all" && subcmd != "documents" && subcmd != "notes" && subcmd != "diary")
+                ConsoleUtils.Verbose = cmd.HasParameter("verbose");
+                var subcommand = cmd.GetSingleOrDefaultSubcommand();
+                if (subcommand == null)
                 {
                     Console.WriteLine(ConsoleUtils.Translate("INFO_USAGE"));
                     Console.WriteLine("CloudExport {all|documents|notes|diary}");
-                    Console.WriteLine(" [--exportdir=<directory>]");
-                    Console.WriteLine(" [--user=<username>]");
-                    Console.WriteLine(" [--password=<password>]");
-                    Console.WriteLine(" [--code=<code>]");
-                    Console.WriteLine(" [--key=<key>]");
-                    Console.WriteLine(" [--locale={de-DE|en-US|...}]");
-                    Console.WriteLine(" [--overwrite]");
-                    Console.WriteLine(" [--verbose]");
+                    Console.WriteLine(" [-exportdir <directory>]");
+                    Console.WriteLine(" [-user <username>]");
+                    Console.WriteLine(" [-password <password>]");
+                    Console.WriteLine(" [-code <code>]");
+                    Console.WriteLine(" [-key <key>]");
+                    Console.WriteLine(" [-locale {de-DE|en-US|...}]");
+                    Console.WriteLine(" [-overwrite]");
+                    Console.WriteLine(" [-verbose]");
                     return;
                 }
-                string exportDir = cmd.Get("exportdir", CloudExport.GetCloudExportDirectory());
-                string? user = cmd.Get("user");
-                string? pwd = cmd.Get("password");
-                string? code = cmd.Get("code");
-                string? key = cmd.Get("key");
-                bool overwrit = cmd.Has("overwrite");
+                string exportDir = cmd.GetSingleParameter("exportdir", CloudExport.GetCloudExportDirectory());
+                string? user = cmd.GetSingleOrDefaultParameter("user");
+                string? pwd = cmd.GetSingleOrDefaultParameter("password");
+                string? code = cmd.GetSingleOrDefaultParameter("code");
+                string? key = cmd.GetSingleOrDefaultParameter("key");
+                bool overwrit = cmd.HasParameter("overwrite");
                 var token = await CloudExport.AuthenticateAsync(user, pwd, code, locale);
                 var userModel = await CloudExport.GetUserModel(token);
                 exportDir = Path.Combine(exportDir, CloudExport.NormalizeName(userModel.name));
@@ -64,15 +61,15 @@ namespace CloudExport
                 {
                     key = ConsoleUtils.ReadSecret("LABEL_KEY");
                 }
-                if (subcmd == "all" || subcmd =="documents")
+                if (subcommand == "all" || subcommand == "documents")
                 {
                     await CloudExport.ExportDocumentsAsync(exportDir, token, key, overwrit, userModel.passwordManagerSalt);
                 }
-                if (subcmd == "all" || subcmd == "notes")
+                if (subcommand == "all" || subcommand == "notes")
                 {
                     await CloudExport.ExportNotesAsync(exportDir, token, key, overwrit, userModel.passwordManagerSalt);
                 }
-                if (subcmd == "all" || subcmd == "diary")
+                if (subcommand == "all" || subcommand == "diary")
                 {
                     await CloudExport.ExportDiaryAsync(exportDir, token, key, overwrit, userModel.passwordManagerSalt, new CultureInfo(locale));
                 }

@@ -27,12 +27,12 @@ namespace CloudExport
             ParseCommandLine(args);
         }
 
-        public bool Has(string param)
+        public bool HasParameter(string param)
         {
             return paramDict.ContainsKey(param);
         }
 
-        public string? Get(string param = "")
+        public string? GetSingleOrDefaultParameter(string param)
         {
             paramDict.TryGetValue(param, out var l);
             if (l != null && l.Count > 0)
@@ -42,42 +42,73 @@ namespace CloudExport
             return null;
         }
 
-        public string Get(string param, string def)
+        public string GetSingleParameter(string param, string def)
         {
-            var ret = Get(param);
+            var ret = GetSingleOrDefaultParameter(param);
             return ret == null ? def : ret;
+        }
+
+        public List<string>? GetParameters(string param)
+        {
+            paramDict.TryGetValue(param, out var l);
+            return l;
+        }
+
+        public string? GetSingleOrDefaultSubcommand()
+        {
+            var l = GetSubcommands();
+            if (l != null && l.Count() == 1)
+            {
+                return l[0];
+            }
+            return null;
+        }
+
+        public List<string>? GetSubcommands()
+        {
+            return GetParameters("");            
         }
 
         private void ParseCommandLine(string[] args)
         {
+            string? lastParam = null;
+            List<string> subCommands = new();
+            List<string> lastArgs = new();
             foreach (var arg in args)
             {
-                var key = "";
-                var val = "";
-                var idx1 = arg.IndexOf("--");
-                if (idx1 >= 0)
+                var param = arg;
+                if (param.StartsWith("-") && param.Length > 1 && param[1] != '-')
                 {
-                    var idx2 = arg.IndexOf("=", idx1 + 2);
-                    if (idx2 > 0)
+                    if (lastParam != null)
                     {
-                        key = arg[(idx1 + 2)..(idx2)].ToLowerInvariant();
-                        val = arg[(idx2 + 1)..];
+                        paramDict[lastParam] = lastArgs;
+                        lastArgs = new();
                     }
-                    else
-                    {
-                        key = arg[(idx1 + 2)..].ToLowerInvariant();
-                    }
+                    lastParam = arg[1..].ToLowerInvariant();
                 }
                 else
                 {
-                    val = arg;
+                    if (param.StartsWith("-") && arg.Length > 1)
+                    {
+                        param = arg[1..];
+                    }
+                    if (lastParam == null)
+                    {
+                        subCommands.Add(param.ToLowerInvariant());
+                    }
+                    else
+                    {
+                        lastArgs.Add(param);
+                    }
                 }
-                if (!paramDict.TryGetValue(key, out var l))
-                {
-                    l = new List<string>();
-                    paramDict[key] = l;
-                }
-                l.Add(val);
+            }
+            if (lastParam != null)
+            {
+                paramDict[lastParam] = lastArgs;
+            }
+            if (subCommands.Count > 0)
+            {
+                paramDict[""] = subCommands;
             }
         }
     }
