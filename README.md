@@ -17,3 +17,5 @@
  On Linux start the program with dotnet CloudExport.dll.
  The text files written for notes and the diary are written in UNICODE format.
  Use iconv -f UNICODE to convert these files on a Linux system.
+
+The current version is usually available here for download: [CloudExport](https://www.stockfleth.eu/view?page=downloads).
