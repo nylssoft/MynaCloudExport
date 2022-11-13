@@ -37,7 +37,7 @@ namespace CloudExport
                 if (subcommand == null)
                 {
                     Console.WriteLine(ConsoleUtils.Translate("INFO_USAGE"));
-                    Console.WriteLine("CloudExport {all|documents|notes|diary}");
+                    Console.WriteLine("CloudExport {all|documents|notes|diary|passwords}");
                     Console.WriteLine(" [-exportdir <directory>]");
                     Console.WriteLine(" [-user <username>]");
                     Console.WriteLine(" [-password <password>]");
@@ -72,6 +72,17 @@ namespace CloudExport
                 if (subcommand == "all" || subcommand == "diary")
                 {
                     await CloudExport.ExportDiaryAsync(exportDir, token, key, overwrit, userModel.passwordManagerSalt, new CultureInfo(locale));
+                }
+                if (subcommand == "all" || subcommand == "passwords")
+                {
+                    if (userModel.hasPasswordManagerFile)
+                    {
+                        await CloudExport.ExportPasswordItemsAsync(exportDir, CloudExport.NormalizeName(userModel.name), token, key, overwrit, userModel.passwordManagerSalt, new CultureInfo(locale));
+                    }
+                    else
+                    {
+                        ConsoleUtils.WriteInfo("NO_PASSWORDS");
+                    }
                 }
             }
             catch (Exception ex)

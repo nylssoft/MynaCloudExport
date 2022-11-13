@@ -153,14 +153,27 @@ namespace CloudExport.Services
             return await response.Content.ReadFromJsonAsync<bool>();
         }
 
-        public static async Task<string?> GetPasswordFileAsync(string token)
+        public static async Task<string> GetPasswordFileAsync(string token)
         {
             if (httpClient == null) throw new ArgumentException("RestClient not initialized.");
             httpClient.DefaultRequestHeaders.Remove("token");
             httpClient.DefaultRequestHeaders.Add("token", token);
             var response = await httpClient.GetAsync("api/pwdman/file");
             await EnsureSuccessAsync(response);
-            return await response.Content.ReadFromJsonAsync<string>();
+            var ret = await response.Content.ReadFromJsonAsync<string>();
+            if (ret == null) throw new ArgumentException("Invalid response");
+            return ret;
+        }
+
+        public static async Task UploadPasswordFileAsync(string token, string content)
+        {
+            if (httpClient == null) throw new ArgumentException("RestClient not initialized.");
+            httpClient.DefaultRequestHeaders.Remove("token");
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            httpClient.DefaultRequestHeaders.Add("token", token);
+            var response = await httpClient.PostAsync("api/pwdman/file", new StringContent(content, Encoding.UTF8, "application/json"));
+            await EnsureSuccessAsync(response);
         }
 
         public static async Task<List<Note>> GetNotesAsync(string token)
@@ -305,17 +318,6 @@ namespace CloudExport.Services
             var response = await httpClient.GetAsync($"api/document/download/{id}");
             await EnsureSuccessAsync(response);
             return await response.Content.ReadAsByteArrayAsync();
-        }
-
-        public static async Task UploadPasswordFileAsync(string token, string content)
-        {
-            if (httpClient == null) throw new ArgumentException("RestClient not initialized.");
-            httpClient.DefaultRequestHeaders.Remove("token");
-            httpClient.DefaultRequestHeaders.Accept.Clear();
-            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            httpClient.DefaultRequestHeaders.Add("token", token);
-            var response = await httpClient.PostAsync("api/pwdman/file", new StringContent(content, Encoding.UTF8, "application/json"));
-            await EnsureSuccessAsync(response);
         }
 
         // --- private
