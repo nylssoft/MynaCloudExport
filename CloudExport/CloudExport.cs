@@ -268,7 +268,7 @@ namespace CloudExport
                 doc.AppendChild(rootElem);
                 AddElement(doc, rootElem, "Version", new Version(0, 5, 2).ToString());
                 AddElement(doc, rootElem, "Name", ConsoleUtils.Translate("PASSWORDS"));
-                AddElement(doc, rootElem, "Description", ConsoleUtils.Translate("CLOUD_EXPORT_1", DateTime.Now.ToString(pattern, ci)));
+                AddElement(doc, rootElem, "Description", ConsoleUtils.Translate("PASSWORD_EXPORT_FROM_1", DateTime.Now.ToString(pattern, ci)));
                 var passwordsElem = doc.CreateElement("Passwords");
                 foreach (var pwd in pwdItems)
                 {
