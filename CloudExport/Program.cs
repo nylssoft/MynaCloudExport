@@ -43,6 +43,7 @@ namespace CloudExport
                     Console.WriteLine(" [-password <password>]");
                     Console.WriteLine(" [-code <code>]");
                     Console.WriteLine(" [-key <key>]");
+                    Console.WriteLine(" [-masterpassword <masterpassword>]");
                     Console.WriteLine(" [-locale {de-DE|en-US|...}]");
                     Console.WriteLine(" [-overwrite]");
                     Console.WriteLine(" [-verbose]");
@@ -53,6 +54,7 @@ namespace CloudExport
                 string? pwd = cmd.GetSingleOrDefaultParameter("password");
                 string? code = cmd.GetSingleOrDefaultParameter("code");
                 string? key = cmd.GetSingleOrDefaultParameter("key");
+                string? masterpwd = cmd.GetSingleOrDefaultParameter("masterpassword");
                 bool overwrit = cmd.HasParameter("overwrite");
                 var token = await CloudExport.AuthenticateAsync(user, pwd, code, locale);
                 var userModel = await CloudExport.GetUserModel(token);
@@ -77,7 +79,7 @@ namespace CloudExport
                 {
                     if (userModel.hasPasswordManagerFile)
                     {
-                        await CloudExport.ExportPasswordItemsAsync(exportDir, CloudExport.NormalizeName(userModel.name), token, key, overwrit, userModel.passwordManagerSalt, new CultureInfo(locale));
+                        await CloudExport.ExportPasswordItemsAsync(exportDir, masterpwd, CloudExport.NormalizeName(userModel.name), token, key, overwrit, userModel.passwordManagerSalt, new CultureInfo(locale));
                     }
                     else
                     {

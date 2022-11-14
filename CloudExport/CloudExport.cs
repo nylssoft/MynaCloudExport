@@ -219,8 +219,9 @@ namespace CloudExport
             }
         }
 
-        public static async Task ExportPasswordItemsAsync(string exportDir, string username, string token, string key, bool overwrit, string salt, CultureInfo ci)
+        public static async Task ExportPasswordItemsAsync(string exportDir, string? masterpwd, string username, string token, string key, bool overwrit, string salt, CultureInfo ci)
         {
+            masterpwd ??= ConsoleUtils.ReadSecret("LABEL_MASTERPWD");
             var pwdDir = Path.Combine(exportDir, ConsoleUtils.Translate("PASSWORDS"));
             var keyDir = Path.Combine(pwdDir, ConsoleUtils.Translate("PASSWORD_KEYS"));
             Directory.CreateDirectory(pwdDir);
@@ -257,10 +258,10 @@ namespace CloudExport
             var pattern = ci.DateTimeFormat.FullDateTimePattern;
             using (var rijAlg = Aes.Create())
             {
-                WriteNewKey(keyDir, id, key);
+                WriteNewKey(keyDir, id, masterpwd);
                 var iv = ReadSecret(keyDir, id, SecretType.IV);
                 var encryptedKey = ReadSecret(keyDir, id, SecretType.Key);
-                rijAlg.Key = TransformKey(encryptedKey, iv, key, TransformType.Decrypt);
+                rijAlg.Key = TransformKey(encryptedKey, iv, masterpwd, TransformType.Decrypt);
                 rijAlg.IV = iv;
                 var cryptoTransform = rijAlg.CreateEncryptor();
                 var doc = new XmlDocument();
