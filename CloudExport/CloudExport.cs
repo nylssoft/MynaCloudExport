@@ -63,9 +63,9 @@ namespace CloudExport
             return $"{sb}{ext}";
         }
 
-        public static async Task Init(string locale)
+        public static async Task Init(string hostname, string locale)
         {
-            await RestClient.InitAsync("https://www.stockfleth.eu", GetShortLocale(locale));
+            await RestClient.InitAsync($"https://{hostname}", GetShortLocale(locale));
         }
 
         public static async Task<string> AuthenticateAsync(string? user, string? pwd, string? code, string locale)

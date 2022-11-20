@@ -26,18 +26,20 @@ namespace CloudExport
             try
             {
                 CommandLine cmd = new(args);
+                string hostname = cmd.GetSingleParameter("hostname", "www.stockfleth.eu");
                 string locale = cmd.GetSingleParameter("locale", CultureInfo.CurrentCulture.TwoLetterISOLanguageName);
                 if (!locale.StartsWith("de-") && !locale.StartsWith("en-"))
                 {
                     locale = "en-US";
                 }
-                await CloudExport.Init(locale);
+                await CloudExport.Init(hostname, locale);
                 ConsoleUtils.Verbose = cmd.HasParameter("verbose");
                 var subcommand = cmd.GetSingleOrDefaultSubcommand();
                 if (subcommand == null)
                 {
                     Console.WriteLine(ConsoleUtils.Translate("INFO_USAGE"));
                     Console.WriteLine("CloudExport {all|documents|notes|diary|passwords}");
+                    Console.WriteLine(" [-hostname <host>]");
                     Console.WriteLine(" [-exportdir <directory>]");
                     Console.WriteLine(" [-user <username>]");
                     Console.WriteLine(" [-password <password>]");
