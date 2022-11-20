@@ -39,7 +39,7 @@ namespace CloudExport
                 {
                     Console.WriteLine(ConsoleUtils.Translate("INFO_USAGE"));
                     Console.WriteLine("CloudExport {all|documents|notes|diary|passwords}");
-                    Console.WriteLine(" [-hostname <host>]");
+                    Console.WriteLine(" [-hostname <hostname>]");
                     Console.WriteLine(" [-exportdir <directory>]");
                     Console.WriteLine(" [-user <username>]");
                     Console.WriteLine(" [-password <password>]");
