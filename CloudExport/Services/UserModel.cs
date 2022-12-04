@@ -37,8 +37,6 @@ namespace CloudExport.Services
 
         public List<string> roles { get; set; } = new List<string>();
 
-        public bool hasPasswordManagerFile { get; set; }
-
         public string passwordManagerSalt { get; set; } = string.Empty;
 
         public bool accountLocked { get; set; }
@@ -50,5 +48,15 @@ namespace CloudExport.Services
         public long usedStorage { get; set; }
 
         public bool loginEnabled { get; set; }
+
+        public bool hasContacts { get; set; }
+
+        public bool hasDiary { get; set; }
+
+        public bool hasDocuments { get; set; }
+
+        public bool hasNotes { get; set; }
+
+        public bool hasPasswordManagerFile { get; set; }
     }
 }

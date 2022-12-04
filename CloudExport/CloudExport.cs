@@ -219,6 +219,64 @@ namespace CloudExport
             }
         }
 
+        public static async Task ExportContactsAsync(string exportDir, string token, string key, bool overwrit, string salt)
+        {
+            var encrypted = await RestClient.GetContactsAsync(token);
+            var plainText = DecodeText(encrypted, key, salt);
+            if (plainText == null) return;
+            var contacts = JsonSerializer.Deserialize<Contacts>(plainText);
+            if (contacts == null || contacts.items == null) return;
+            var name = ConsoleUtils.Translate("CONTACTS");
+            exportDir = Path.Combine(exportDir, name);
+            Directory.CreateDirectory(exportDir);
+            string csvFile = Path.Combine(exportDir, $"{name}.csv");
+            string jsonFile = Path.Combine(exportDir, $"{name}.json");
+            if (File.Exists(csvFile) || File.Exists(jsonFile))
+            {
+                if (overwrit)
+                {
+                    File.Delete(jsonFile);
+                    File.Delete(csvFile);
+                }
+                else
+                {
+                    if (File.Exists(csvFile))
+                    {
+                        ConsoleUtils.WriteWarning("INFO_FILE_EXISTS_1", csvFile);
+                    }
+                    if (File.Exists(jsonFile))
+                    {
+                        ConsoleUtils.WriteWarning("INFO_FILE_EXISTS_1", jsonFile);
+                    }
+                    return;
+                }
+            }
+            ConsoleUtils.WriteInfo("INFO_WRITE_FILE_1", jsonFile);
+            File.WriteAllText(jsonFile, plainText, Encoding.Unicode);
+            List<string> lines = new();
+            StringBuilder sb = new();
+            AddCSVColumn(sb, ConsoleUtils.Translate("NAME"));
+            AddCSVColumn(sb, ConsoleUtils.Translate("ADDRESS"));
+            AddCSVColumn(sb, ConsoleUtils.Translate("PHONE"));
+            AddCSVColumn(sb, ConsoleUtils.Translate("BIRTHDAY"));
+            AddCSVColumn(sb, ConsoleUtils.Translate("EMAIL"));
+            AddCSVColumn(sb, ConsoleUtils.Translate("NOTE"), last: true);
+            lines.Add(sb.ToString());
+            foreach (ContactItem contactItem in contacts.items)
+            {
+                sb = new();
+                AddCSVColumn(sb, contactItem.name);
+                AddCSVColumn(sb, contactItem.address);
+                AddCSVColumn(sb, contactItem.phone);
+                AddCSVColumn(sb, contactItem.birthday);
+                AddCSVColumn(sb, contactItem.email);
+                AddCSVColumn(sb, contactItem.note, last: true);
+                lines.Add(sb.ToString());
+            }
+            ConsoleUtils.WriteInfo("INFO_WRITE_FILE_1", csvFile);
+            File.AppendAllLines(csvFile, lines, Encoding.Unicode);
+        }
+
         public static async Task ExportPasswordItemsAsync(string exportDir, string? masterpwd, string username, string token, string key, bool overwrit, string salt, CultureInfo ci)
         {
             masterpwd ??= ConsoleUtils.ReadSecret("LABEL_MASTERPWD");
@@ -304,6 +362,18 @@ namespace CloudExport
 
 
         // --- private
+
+        private static void AddCSVColumn(StringBuilder sb, string? val, bool last = false)
+        {
+            if (val != null)
+            {
+                sb.Append($"\"{val}\"");
+            }
+            if (!last)
+            {
+                sb.Append(',');
+            }
+        }
 
         private static byte[] ReadSecret(string keyDirectory, string id, SecretType st)
         {

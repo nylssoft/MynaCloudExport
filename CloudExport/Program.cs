@@ -38,7 +38,7 @@ namespace CloudExport
                 if (subcommand == null)
                 {
                     Console.WriteLine(ConsoleUtils.Translate("INFO_USAGE"));
-                    Console.WriteLine("CloudExport {all|documents|notes|diary|passwords}");
+                    Console.WriteLine("CloudExport {all|documents|notes|diary|passwords|contacts}");
                     Console.WriteLine(" [-hostname <hostname>]");
                     Console.WriteLine(" [-exportdir <directory>]");
                     Console.WriteLine(" [-user <username>]");
@@ -67,15 +67,36 @@ namespace CloudExport
                 }
                 if (subcommand == "all" || subcommand == "documents")
                 {
-                    await CloudExport.ExportDocumentsAsync(exportDir, token, key, overwrit, userModel.passwordManagerSalt);
+                    if (userModel.hasDocuments) 
+                    {
+                        await CloudExport.ExportDocumentsAsync(exportDir, token, key, overwrit, userModel.passwordManagerSalt);
+                    }
+                    else
+                    {
+                        ConsoleUtils.WriteInfo("NO_DOCUMENTS");
+                    }
                 }
                 if (subcommand == "all" || subcommand == "notes")
                 {
-                    await CloudExport.ExportNotesAsync(exportDir, token, key, overwrit, userModel.passwordManagerSalt);
+                    if (userModel.hasNotes)
+                    {
+                        await CloudExport.ExportNotesAsync(exportDir, token, key, overwrit, userModel.passwordManagerSalt);
+                    }
+                    else
+                    {
+                        ConsoleUtils.WriteInfo("NO_NOTES");
+                    }
                 }
                 if (subcommand == "all" || subcommand == "diary")
                 {
-                    await CloudExport.ExportDiaryAsync(exportDir, token, key, overwrit, userModel.passwordManagerSalt, new CultureInfo(locale));
+                    if (userModel.hasDiary)
+                    {
+                        await CloudExport.ExportDiaryAsync(exportDir, token, key, overwrit, userModel.passwordManagerSalt, new CultureInfo(locale));
+                    }
+                    else
+                    {
+                        ConsoleUtils.WriteInfo("NO_DIARY");
+                    }
                 }
                 if (subcommand == "all" || subcommand == "passwords")
                 {
@@ -86,6 +107,17 @@ namespace CloudExport
                     else
                     {
                         ConsoleUtils.WriteInfo("NO_PASSWORDS");
+                    }
+                }
+                if (subcommand == "all" || subcommand == "contacts")
+                {
+                    if (userModel.hasContacts)
+                    {
+                        await CloudExport.ExportContactsAsync(exportDir, token, key, overwrit, userModel.passwordManagerSalt);
+                    }
+                    else
+                    {
+                        ConsoleUtils.WriteInfo("NO_CONTACTS");
                     }
                 }
             }
