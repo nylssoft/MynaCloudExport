@@ -2,7 +2,7 @@
  Command line tool to export user data stored in portal stockfleth.eu.
  
  The first argument specify which items should be exported into the file system.
- Use 'all' to export documents, notes, passwords and the diary or 'documents', 'notes', 'passwords' or 'diary' to export only the specified type.
+ Use 'all' to export documents, notes, passwords, contacts and the diary or 'documents', 'notes', 'passwords', 'contacts' or 'diary' to export only the specified type.
  If no further arguments are specified the user name and the password must be entered.
  In case of two factor authentication the 2fa code is required too.
  Then the key used to decrypt the content must be specified (most data stored in the portal is encrypted in the client before it is uploaded to the portal).
