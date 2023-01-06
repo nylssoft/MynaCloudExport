@@ -1,6 +1,6 @@
 ﻿/*
     Myna Cloud Export
-    Copyright (C) 2022 Niels Stockfleth
+    Copyright (C) 2022-2023 Niels Stockfleth
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -84,10 +84,28 @@ namespace CloudExport
             return token;
         }
 
+        public static async Task<string> AuthenticateTargetAsync(string? targetUser, string? targetPwd, string? targetCode, string locale)
+        {
+            var uuid = await GetUUID();
+            ClientInfo clientInfo = new() { Name = "CloudExport", UUID = uuid };
+            targetUser ??= ConsoleUtils.Read("LABEL_TARGET_NAME");
+            targetPwd ??= ConsoleUtils.ReadSecret("LABEL_TARGET_PWD");
+            var authResult = await RestClient.AuthenticateAsync(targetUser, targetPwd, clientInfo, GetShortLocale(locale));
+            if (authResult.requiresPass2)
+            {
+                targetCode ??= ConsoleUtils.ReadSecret("LABEL_TARGET_SEC_KEY");
+                authResult = await RestClient.AuthenticatePass2Async(authResult.token, targetCode);
+            }
+            var targetToken = authResult.token;
+            return targetToken;
+        }
+
         public static async Task<UserModel> GetUserModel(string token)
         {
             return await RestClient.GetUserAsync(token);
         }
+
+        // --- export
 
         public static async Task ExportDocumentsAsync(string exportDir, string token, string key, bool overwrit, string salt)
         {
@@ -146,29 +164,25 @@ namespace CloudExport
             exportDir = Path.Combine(exportDir, ConsoleUtils.Translate("NOTES"));
             Directory.CreateDirectory(exportDir);
             var notes = await RestClient.GetNotesAsync(token);
-            if (notes != null)
+            foreach (var n in notes)
             {
-                foreach (var n in notes)
+                var note = await RestClient.GetNoteAsync(token, n.id);
+                var title = DecodeText(note.title, key, salt);
+                ConsoleUtils.WriteInfo("INFO_READ_NOTE_1", title);
+                var notePath = Path.Combine(exportDir, $"{NormalizeName(title)}.txt");
+                if (File.Exists(notePath) && !overwrit)
                 {
-                    var note = await RestClient.GetNoteAsync(token, n.id);
-                    if (note == null) continue;
-                    var title = DecodeText(note.title, key, salt);
-                    ConsoleUtils.WriteInfo("INFO_READ_NOTE_1", title);
-                    var notePath = Path.Combine(exportDir, $"{NormalizeName(title)}.txt");
-                    if (File.Exists(notePath) && !overwrit)
-                    {
-                        ConsoleUtils.WriteWarning("INFO_FILE_EXISTS_1", notePath);
-                        continue;
-                    }
-                    ConsoleUtils.WriteInfo("INFO_WRITE_FILE_1", notePath);
-                    try
-                    {
-                        await File.WriteAllTextAsync(notePath, DecodeText(note.content, key, salt), Encoding.Unicode);
-                    }
-                    catch (Exception ex)
-                    {
-                        ConsoleUtils.WriteError(ex.Message);
-                    }
+                    ConsoleUtils.WriteWarning("INFO_FILE_EXISTS_1", notePath);
+                    continue;
+                }
+                ConsoleUtils.WriteInfo("INFO_WRITE_FILE_1", notePath);
+                try
+                {
+                    await File.WriteAllTextAsync(notePath, DecodeText(note.content, key, salt), Encoding.Unicode);
+                }
+                catch (Exception ex)
+                {
+                    ConsoleUtils.WriteError(ex.Message);
                 }
             }
         }
@@ -186,7 +200,6 @@ namespace CloudExport
                 if (skipYears.Contains(dt.Year)) continue;
                 ConsoleUtils.WriteInfo("INFO_READ_ENTRY_1", dt.ToString(ci.DateTimeFormat.ShortDatePattern));
                 var entry = await RestClient.GetDiaryAsync(token, dt.Year, dt.Month, dt.Day);
-                if (entry == null) continue;
                 var datestr = dt.ToString("yyyy", CultureInfo.InvariantCulture);
                 var entryPath = Path.Combine(exportDir, $"{datestr}.txt");
                 try
@@ -360,6 +373,134 @@ namespace CloudExport
             }
         }
 
+        // --- copy
+
+        public static async Task CopyNotesAsync(string token, string key, string salt, string targetToken, string targetKey, string targetSalt)
+        {
+            var notes = await RestClient.GetNotesAsync(token);
+            foreach (var n in notes)
+            {
+                var note = await RestClient.GetNoteAsync(token, n.id);
+                try
+                {
+                    var title = DecodeText(note.title, key, salt);
+                    ConsoleUtils.WriteInfo("INFO_COPY_NOTE_1", title);
+                    var content = DecodeText(note.content, key, salt);
+                    var encodedTitle = EncodeText(title, targetKey, targetSalt);
+                    var encodedContent = EncodeText(content, targetKey, targetSalt);
+                    var nodeid = await RestClient.CreateNewNoteAsync(targetToken, encodedTitle);
+                    await RestClient.UpdateNoteAsync(targetToken, nodeid, encodedTitle, encodedContent);
+                }
+                catch (Exception ex)
+                {
+                    ConsoleUtils.WriteError(ex.Message);
+                }
+            }
+        }
+
+        public static async Task CopyDiaryAsync(string token, string key, string salt, string targetToken, string targetKey, string targetSalt, CultureInfo ci)
+        {
+            var all = await RestClient.GetAllDiaryEntriesAsync(token);
+            foreach (var dt in all)
+            {
+                ConsoleUtils.WriteInfo("INFO_COPY_ENTRY_1", dt.ToString(ci.DateTimeFormat.ShortDatePattern));
+                var entry = await RestClient.GetDiaryAsync(token, dt.Year, dt.Month, dt.Day);
+                try
+                {
+                    var txt = DecodeText(entry.entry, key, salt).Trim();
+                    if (!string.IsNullOrEmpty(txt))
+                    {
+                        var encodedTxt = EncodeText(txt, targetKey, targetSalt);
+                        await RestClient.SaveDiaryAsync(targetToken, dt.Year, dt.Month, dt.Day, encodedTxt);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ConsoleUtils.WriteError(ex.Message);
+                }
+            }
+        }
+
+        public static async Task CopyContactsAsync(string token, string key, string salt, string targetToken, string targetKey, string targetSalt)
+        {
+            ConsoleUtils.WriteInfo("INFO_COPY_CONTACTS");
+            var encrypted = await RestClient.GetContactsAsync(token);
+            var plainText = DecodeText(encrypted, key, salt);
+            if (plainText == null) return;
+            var encodedText = EncodeText(plainText, targetKey, targetSalt);
+            await RestClient.SaveContactsAsync(targetToken, encodedText);
+        }
+
+        public static async Task CopyPasswordItemsAsync(string token, string key, string salt, string targetToken, string targetKey, string targetSalt)
+        {
+            ConsoleUtils.WriteInfo("INFO_COPY_PASSWORDS");
+            var encrypted = await RestClient.GetPasswordFileAsync(token);
+            var plainData = Decrypt(Convert.FromHexString(encrypted), key, salt);
+            var pwdItems = JsonSerializer.Deserialize<List<PasswordItem>>(plainData);
+            if (pwdItems == null) return;
+            foreach (var pwd in pwdItems)
+            {
+                pwd.Password = DecodeText(pwd.Password, key, salt);
+                pwd.Password = EncodeText(pwd.Password, targetKey, targetSalt);
+            }
+            plainData = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(pwdItems));
+            var encodedData = Encrypt(plainData, targetKey, targetSalt);
+            await RestClient.SavePasswordFileAsync(targetToken, Convert.ToHexString(encodedData));
+        }
+
+        public static async Task CopyDocumentsAsync(string token, string key, string salt, string targetToken, string targetKey, string targetSalt)
+        {
+            Queue<DocumentItem?> queue = new();
+            queue.Enqueue(null);
+            var targetFolderIdmap = new Dictionary<long, long>();
+            while (queue.Any())
+            {
+                var currentFolder = queue.Dequeue();
+                var nextid = currentFolder?.id;
+                var items = await RestClient.GetDocumentItemsAsync(token, nextid);
+                if (currentFolder == null)
+                {
+                    currentFolder = items.First(i => i.type == "Volume");
+                    var currentTargetFolder = await RestClient.CreateVolume(targetToken, currentFolder.name);
+                    targetFolderIdmap[currentFolder.id] = currentTargetFolder.id;
+                }
+                else if (currentFolder.parentId != null)
+                {
+                    var targetParentId = targetFolderIdmap[currentFolder.parentId.Value];
+                    var currentTargetFolder = await RestClient.CreateFolder(targetToken, targetParentId, currentFolder.name);
+                    targetFolderIdmap[currentFolder.id] = currentTargetFolder.id;
+                }
+                var folders = items.Where(i => i.parentId == currentFolder.id && i.type == "Folder");
+                foreach (var folder in folders)
+                {
+                    queue.Enqueue(folder);
+                }
+                var documents = items.Where(i => i.parentId == currentFolder.id && i.type == "Document");
+                foreach (var doc in documents)
+                {
+                    ConsoleUtils.WriteInfo("INFO_COPY_DOCUMENT_1", doc.name);
+                    var content = await RestClient.DownloadDocumentAsync(token, doc.id);
+                    try
+                    {
+                        var targetFolderId = targetFolderIdmap[currentFolder.id];
+                        if (!string.IsNullOrEmpty(doc.accessRole))
+                        {
+                            await RestClient.UploadDocument(targetToken, targetFolderId, doc.name, content);
+                        }
+                        else
+                        {
+                            var plainData = Decrypt(content, key, salt);
+                            var encodedData = Encrypt(plainData, targetKey, targetSalt);
+                            await RestClient.UploadDocument(targetToken, targetFolderId, doc.name, encodedData);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        ConsoleUtils.WriteError(ex.Message);
+                    }
+                }
+            }
+        }
 
         // --- private
 
@@ -566,6 +707,32 @@ namespace CloudExport
             return plainText;
         }
 
+        private static byte[] Encrypt(byte[] data, string cryptKey, string salt)
+        {
+            byte[] key = Rfc2898DeriveBytes.Pbkdf2(
+                cryptKey,
+                Encoding.UTF8.GetBytes(salt),
+                1000,
+                HashAlgorithmName.SHA256,
+                256 / 8);
+            var iv = new byte[12];
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(iv);
+            }
+            var encoded = new byte[data.Length];
+            var tag = new byte[16];
+            using (var cipher = new AesGcm(key))
+            {
+                cipher.Encrypt(iv, data, encoded, tag);
+            }
+            var ret = new byte[iv.Length + encoded.Length + tag.Length];
+            iv.CopyTo(ret, 0);
+            encoded.CopyTo(ret, iv.Length);
+            tag.CopyTo(ret, iv.Length + encoded.Length);
+            return ret;
+        }
+
         private static string DecodeText(string encrypted, string cryptKey, string salt)
         {
             if (string.IsNullOrEmpty(encrypted))
@@ -575,5 +742,13 @@ namespace CloudExport
             var decoded = Decrypt(Convert.FromHexString(encrypted), cryptKey, salt);
             return Encoding.UTF8.GetString(decoded);
         }
+
+        private static string EncodeText(string text, string cryptKey, string salt)
+        {
+            var data = Encoding.UTF8.GetBytes(text);
+            var encrypted = Encrypt(data, cryptKey, salt);
+            return Convert.ToHexString(encrypted);
+        }
+
     }
 }

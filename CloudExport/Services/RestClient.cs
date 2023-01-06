@@ -1,6 +1,6 @@
 ﻿/*
     Myna Cloud Export
-    Copyright (C) 2022 Niels Stockfleth
+    Copyright (C) 2022-2023 Niels Stockfleth
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -241,6 +241,122 @@ namespace CloudExport.Services
             await EnsureSuccessAsync(response);
             var ret = await response.Content.ReadFromJsonAsync<string>();
             if (ret == null) throw new ArgumentException("Invalid response");
+            return ret;
+        }
+
+        public static async Task<long> CreateNewNoteAsync(string token, string title)
+        {
+            if (httpClient == null) throw new ArgumentException("RestClient not initialized.");
+            EnsureRateLimit();
+            httpClient.DefaultRequestHeaders.Remove("token");
+            httpClient.DefaultRequestHeaders.Add("token", token);
+            var response = await httpClient.PostAsJsonAsync("api/notes/note",
+                new
+                {
+                    Title = title
+                });
+            await EnsureSuccessAsync(response);
+            var ret = await response.Content.ReadFromJsonAsync<long>();
+            return ret;
+        }
+
+        public static async Task<DateTime> UpdateNoteAsync(string token, long id, string title, string content)
+        {
+            if (httpClient == null) throw new ArgumentException("RestClient not initialized.");
+            EnsureRateLimit();
+            httpClient.DefaultRequestHeaders.Remove("token");
+            httpClient.DefaultRequestHeaders.Add("token", token);
+            var response = await httpClient.PutAsJsonAsync("api/notes/note",
+                new
+                {
+                    Id = id,
+                    Title = title,
+                    Content = content
+                });
+            await EnsureSuccessAsync(response);
+            var ret = await response.Content.ReadFromJsonAsync<DateTime>();
+            return ret;
+        }
+
+        public static async Task SaveDiaryAsync(string token, int year, int month, int day, string entry)
+        {
+            if (httpClient == null) throw new ArgumentException("RestClient not initialized.");
+            EnsureRateLimit();
+            var dt = new DateTime(year, month, day);
+            var iso8601 = dt.ToString(ISO8601_DATEFORMAT, CultureInfo.InvariantCulture);
+            httpClient.DefaultRequestHeaders.Remove("token");
+            httpClient.DefaultRequestHeaders.Add("token", token);
+            var response = await httpClient.PostAsJsonAsync("api/diary/entry",
+                new
+                {
+                    Date = iso8601,
+                    Entry = entry
+                });
+            await EnsureSuccessAsync(response);
+        }
+
+        public static async Task SaveContactsAsync(string token, string content)
+        {
+            if (httpClient == null) throw new ArgumentException("RestClient not initialized.");
+            EnsureRateLimit();
+            httpClient.DefaultRequestHeaders.Remove("token");
+            httpClient.DefaultRequestHeaders.Add("token", token);
+            var response = await httpClient.PutAsJsonAsync("api/contacts", content);
+            await EnsureSuccessAsync(response);
+        }
+
+        public static async Task SavePasswordFileAsync(string token, string content)
+        {
+            if (httpClient == null) throw new ArgumentException("RestClient not initialized.");
+            EnsureRateLimit();
+            httpClient.DefaultRequestHeaders.Remove("token");
+            httpClient.DefaultRequestHeaders.Add("token", token);
+            var response = await httpClient.PostAsJsonAsync("api/pwdman/file", content);
+            await EnsureSuccessAsync(response);
+        }
+
+
+        public static async Task<DocumentItem> CreateVolume(string token, string volumeName)
+        {
+            if (httpClient == null) throw new ArgumentException("RestClient not initialized.");
+            EnsureRateLimit();
+            httpClient.DefaultRequestHeaders.Remove("token");
+            httpClient.DefaultRequestHeaders.Add("token", token);
+            var response = await httpClient.PostAsJsonAsync("api/document/volume", volumeName);
+            await EnsureSuccessAsync(response);
+            var ret = await response.Content.ReadFromJsonAsync<DocumentItem>();
+            if (ret == null) throw new ArgumentException("Invalid server response.");
+            return ret;
+        }
+
+        public static async Task<DocumentItem> CreateFolder(string token, long nodeId, string folderName)
+        {
+            if (httpClient == null) throw new ArgumentException("RestClient not initialized.");
+            EnsureRateLimit();
+            httpClient.DefaultRequestHeaders.Remove("token");
+            httpClient.DefaultRequestHeaders.Add("token", token);
+            var response = await httpClient.PostAsJsonAsync($"api/document/folder/{nodeId}", folderName);
+            await EnsureSuccessAsync(response);
+            var ret = await response.Content.ReadFromJsonAsync<DocumentItem>();
+            if (ret == null) throw new ArgumentException("Invalid server response.");
+            return ret;
+        }
+
+        public static async Task<DocumentItem> UploadDocument(string token, long parentId, string name, byte [] data)
+        {
+            if (httpClient == null) throw new ArgumentException("RestClient not initialized.");
+            EnsureRateLimit();
+            httpClient.DefaultRequestHeaders.Remove("token");
+            httpClient.DefaultRequestHeaders.Add("token", token);
+            var formData = new MultipartFormDataContent
+            {
+                { new ByteArrayContent(data), "document-file", name },
+                { new StringContent("false"), "overwrite" }
+            };
+            var response = await httpClient.PostAsync($"api/document/upload/{parentId}", formData);
+            await EnsureSuccessAsync(response);
+            var ret = await response.Content.ReadFromJsonAsync<DocumentItem>();
+            if (ret == null) throw new ArgumentException("Invalid server response.");
             return ret;
         }
 

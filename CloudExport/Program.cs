@@ -1,6 +1,6 @@
 ﻿/*
     Myna Cloud Export
-    Copyright (C) 2022 Niels Stockfleth
+    Copyright (C) 2022-2023 Niels Stockfleth
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -15,6 +15,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+using CloudExport.Services;
 using System.Globalization;
 
 namespace CloudExport
@@ -49,6 +50,13 @@ namespace CloudExport
                     Console.WriteLine(" [-locale {de-DE|en-US|...}]");
                     Console.WriteLine(" [-overwrite]");
                     Console.WriteLine(" [-verbose]");
+                    Console.WriteLine();
+                    Console.WriteLine("CloudExport copy");
+                    Console.WriteLine(" [-hostname <hostname>]");
+                    Console.WriteLine(" [-user <username>] [-password <password>] [-code <code>] [-key <key>]");
+                    Console.WriteLine(" [-targetuser <username>] [-targetpassword <password>] [-targetcode <code>] [-targetkey <key>]");
+                    Console.WriteLine(" [-locale {de-DE|en-US|...}]");
+                    Console.WriteLine(" [-verbose]");
                     return;
                 }
                 string exportDir = cmd.GetSingleParameter("exportdir", CloudExport.GetCloudExportDirectory());
@@ -61,9 +69,10 @@ namespace CloudExport
                 var token = await CloudExport.AuthenticateAsync(user, pwd, code, locale);
                 var userModel = await CloudExport.GetUserModel(token);
                 exportDir = Path.Combine(exportDir, CloudExport.NormalizeName(userModel.name));
-                if (key == null)
+                key ??= ConsoleUtils.ReadSecret("LABEL_KEY");
+                if (subcommand == "copy")
                 {
-                    key = ConsoleUtils.ReadSecret("LABEL_KEY");
+                    await Copy(cmd, token, key, userModel, locale);
                 }
                 if (subcommand == "all" || subcommand == "documents")
                 {
@@ -126,5 +135,72 @@ namespace CloudExport
                 ConsoleUtils.WriteError(ex.Message);
             }
         }
+
+        private static async Task Copy(CommandLine cmd, string token, string key, UserModel userModel, string locale)
+        {
+            string? targetUser = cmd.GetSingleOrDefaultParameter("targetuser");
+            string? targetPwd = cmd.GetSingleOrDefaultParameter("targetpassword");
+            string? targetCode = cmd.GetSingleOrDefaultParameter("targetcode");
+            string? targetKey = cmd.GetSingleOrDefaultParameter("targetkey");
+            var targetToken = await CloudExport.AuthenticateTargetAsync(targetUser, targetPwd, targetCode, locale);
+            var targetUserModel = await CloudExport.GetUserModel(targetToken);
+            targetKey ??= ConsoleUtils.ReadSecret("LABEL_TARGET_KEY");
+            if (userModel.hasNotes)
+            {
+                if (targetUserModel.hasNotes)
+                {
+                    ConsoleUtils.WriteWarning("INFO_TARGET_NOTES_EXIST");
+                }
+                else
+                {
+                    await CloudExport.CopyNotesAsync(token, key, userModel.passwordManagerSalt, targetToken, targetKey, targetUserModel.passwordManagerSalt);
+                }
+            }
+            if (userModel.hasDiary)
+            {
+                if (targetUserModel.hasDiary)
+                {
+                    ConsoleUtils.WriteWarning("INFO_TARGET_DIARY_EXIST");
+                }
+                else
+                {
+                    await CloudExport.CopyDiaryAsync(token, key, userModel.passwordManagerSalt, targetToken, targetKey, targetUserModel.passwordManagerSalt, new CultureInfo(locale));
+                }
+            }
+            if (userModel.hasContacts)
+            {
+                if (targetUserModel.hasContacts)
+                {
+                    ConsoleUtils.WriteWarning("INFO_TARGET_CONTACTS_EXIST");
+                }
+                else
+                {
+                    await CloudExport.CopyContactsAsync(token, key, userModel.passwordManagerSalt, targetToken, targetKey, targetUserModel.passwordManagerSalt);
+                }
+            }
+            if (userModel.hasPasswordManagerFile)
+            {
+                if (targetUserModel.hasPasswordManagerFile)
+                {
+                    ConsoleUtils.WriteWarning("INFO_TARGET_PASSWORDS_EXIST");
+                }
+                else
+                {
+                    await CloudExport.CopyPasswordItemsAsync(token, key, userModel.passwordManagerSalt, targetToken, targetKey, targetUserModel.passwordManagerSalt);
+                }
+            }
+            if (userModel.hasDocuments)
+            {
+                if (targetUserModel.hasDocuments)
+                {
+                    ConsoleUtils.WriteWarning("INFO_TARGET_DOCUMENTS_EXIST");
+                }
+                else
+                {
+                    await CloudExport.CopyDocumentsAsync(token, key, userModel.passwordManagerSalt, targetToken, targetKey, targetUserModel.passwordManagerSalt);
+                }
+            }
+        }
+
     }
 }
