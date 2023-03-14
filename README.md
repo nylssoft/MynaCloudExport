@@ -5,10 +5,10 @@
  Use 'all' to export documents, notes, passwords, contacts and the diary or 'documents', 'notes', 'passwords', 'contacts' or 'diary' to export only the specified type.
  If no further arguments are specified the user name and the password must be entered.
  In case of two factor authentication the 2fa code is required too.
- Then the key used to decrypt the content must be specified (most data stored in the portal is encrypted in the client before it is uploaded to the portal).
- If the passwords are exported a new password for the password manager file has to be specified. Use a different password then the user's account password.
+ Then the key used to decrypt the content must be specified.
+ If passwords are exported a new password for the password manager file has to be specified. Use a different password then the user's account password.
  
- The default directory is %userprofile%/.cloudexport. It contains a file clientinfo.txt that identifies the client to the portal. Do not delete this file if you  do not want to receive a lot of security warning emails from the portal.
+ The default directory is %userprofile%/.cloudexport. It contains a file clientinfo.txt that identifies the client to the website. Do not delete this file if you do not want to receive security warning emails from the website.
  
  Use the option -exportdir to change the destination directory for the files.
  Use the option -verbose to enable verbose logging in the console.
@@ -19,4 +19,4 @@
  The text files written for notes, contacts and the diary are written in UNICODE format.
  Use iconv -f UNICODE to convert these files on a Linux system.
 
-The current version is usually available here for download: [CloudExport](https://www.stockfleth.eu/view?page=downloads).
+The current version is available here for download: [CloudExport](https://www.stockfleth.eu/view?page=downloads).
