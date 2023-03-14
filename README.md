@@ -1,5 +1,5 @@
 # MynaCloudExport
- Command line tool to export user data stored in portal stockfleth.eu.
+ Command line tool to export user data stored in the website [stockfleth.eu](https://www.stockfleth.eu).
  
  The first argument specify which items should be exported into the file system.
  Use 'all' to export documents, notes, passwords, contacts and the diary or 'documents', 'notes', 'passwords', 'contacts' or 'diary' to export only the specified type.
