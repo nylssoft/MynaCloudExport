@@ -693,7 +693,7 @@ namespace CloudExport
                 HashAlgorithmName.SHA256,
                 256 / 8);
             byte[] plainText = new byte[chipherText.Length];
-            using (var cipher = new AesGcm(key))
+            using (var cipher = new AesGcm(key, tag.Length))
             {
                 try
                 {
@@ -722,7 +722,7 @@ namespace CloudExport
             }
             var encoded = new byte[data.Length];
             var tag = new byte[16];
-            using (var cipher = new AesGcm(key))
+            using (var cipher = new AesGcm(key, tag.Length))
             {
                 cipher.Encrypt(iv, data, encoded, tag);
             }
