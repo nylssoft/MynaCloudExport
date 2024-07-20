@@ -21,7 +21,7 @@
   "INFO_TARGET_DOCUMENTS_EXIST": "Documents already exist in target account.",
   "INFO_TARGET_NOTES_EXIST": "Notes already exist in target account.",
   "INFO_TARGET_PASSWORDS_EXIST": "Passwords already exist in target account.",
-  "INFO_USAGE": "Exports or copies documents, notes, passwords, contacts and the diary from the portal stockfleth.eu.\nVersion 1.0.7\n",
+  "INFO_USAGE": "Exports or copies documents, notes, passwords, contacts and the diary from the portal stockfleth.eu.\nVersion 8.0.1\n",
   "INFO_WRITE_FILE_1": "Write file {0}.",
   "INFO_WRITE_FILE_1_2": "Write file {0} ({1} bytes).",
   "LABEL_MASTERPWD": "New password for password manager file",
