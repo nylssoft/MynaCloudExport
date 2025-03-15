@@ -21,7 +21,7 @@
   "INFO_TARGET_DOCUMENTS_EXIST": "Es gibt schon Dokumente im Ziel-Konto.",
   "INFO_TARGET_NOTES_EXIST": "Es gibt schon Notizen im Ziel-Konto.",
   "INFO_TARGET_PASSWORDS_EXIST": "Es gibt schon Kennwörter im Ziel-Konto.",
-  "INFO_USAGE": "Exportiert oder kopiert Dokumente, Notizen, Kennwörter, Kontakte und das Tagebuch aus dem Portal stockfleth.eu.\nVersion 9.0.1\n",
+  "INFO_USAGE": "Exportiert oder kopiert Dokumente, Notizen, Kennwörter, Kontakte und das Tagebuch aus dem Portal stockfleth.eu.\nVersion 9.0.2\n",
   "INFO_WRITE_FILE_1": "Schreibe Datei {0}.",
   "INFO_WRITE_FILE_1_2": "Schreibe Datei {0} ({1} Bytes).",
   "LABEL_MASTERPWD": "Neues Kennwort für Kennwortverwaltungs-Datei",
