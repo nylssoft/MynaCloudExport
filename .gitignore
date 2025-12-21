@@ -2,3 +2,4 @@
 /CloudExport/bin
 /CloudExport/obj
 *.user
+.DS_Store
