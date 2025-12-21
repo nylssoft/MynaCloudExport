@@ -54,7 +54,7 @@ namespace CloudExport.Services
                     var u = Url;
                     if (!string.IsNullOrEmpty(u))
                     {
-                        if (!u.ToLowerInvariant().StartsWith("http"))
+                        if (!u.StartsWith("http", StringComparison.InvariantCultureIgnoreCase))
                         {
                             u = $"https://{Url}";
                         }

@@ -56,7 +56,7 @@ namespace CloudExport
                 }
                 else
                 {
-                    sb.Append($"%{Convert.ToHexString(new[] { Convert.ToByte(c) })}");
+                    sb.Append($"%{Convert.ToHexString([Convert.ToByte(c)])}");
                 }
                 idx++;
             }
@@ -112,7 +112,7 @@ namespace CloudExport
             var destDir = exportDir;
             Queue<DocumentItem?> queue = new();
             queue.Enqueue(null);
-            while (queue.Any())
+            while (queue.Count != 0)
             {
                 var currentFolder = queue.Dequeue();
                 var nextid = currentFolder?.id;
@@ -191,8 +191,8 @@ namespace CloudExport
         {
             exportDir = Path.Combine(exportDir, ConsoleUtils.Translate("DIARY"));
             Directory.CreateDirectory(exportDir);
-            HashSet<int> visitedYears = new();
-            HashSet<int> skipYears = new();
+            HashSet<int> visitedYears = [];
+            HashSet<int> skipYears = [];
             var pattern = ci.DateTimeFormat.MonthDayPattern;
             var all = await RestClient.GetAllDiaryEntriesAsync(token);
             foreach (var dt in all)
@@ -266,7 +266,7 @@ namespace CloudExport
             }
             ConsoleUtils.WriteInfo("INFO_WRITE_FILE_1", jsonFile);
             File.WriteAllText(jsonFile, plainText, Encoding.Unicode);
-            List<string> lines = new();
+            List<string> lines = [];
             StringBuilder sb = new();
             AddCSVColumn(sb, ConsoleUtils.Translate("NAME"));
             AddCSVColumn(sb, ConsoleUtils.Translate("ADDRESS"));
@@ -327,50 +327,44 @@ namespace CloudExport
             }
             var id = Guid.NewGuid().ToString();
             var pattern = ci.DateTimeFormat.FullDateTimePattern;
-            using (var rijAlg = Aes.Create())
+            using var rijAlg = Aes.Create();
+            WriteNewKey(keyDir, id, masterpwd);
+            var iv = ReadSecret(keyDir, id, SecretType.IV);
+            var encryptedKey = ReadSecret(keyDir, id, SecretType.Key);
+            rijAlg.Key = TransformKey(encryptedKey, iv, masterpwd, TransformType.Decrypt);
+            rijAlg.IV = iv;
+            var cryptoTransform = rijAlg.CreateEncryptor();
+            var doc = new XmlDocument();
+            var rootElem = doc.CreateElement("PasswordRepository");
+            doc.AppendChild(rootElem);
+            AddElement(doc, rootElem, "Version", new Version(0, 5, 2).ToString());
+            AddElement(doc, rootElem, "Name", ConsoleUtils.Translate("PASSWORDS"));
+            AddElement(doc, rootElem, "Description", ConsoleUtils.Translate("PASSWORD_EXPORT_FROM_1", DateTime.Now.ToString(pattern, ci)));
+            var passwordsElem = doc.CreateElement("Passwords");
+            foreach (var pwd in pwdItems)
             {
-                WriteNewKey(keyDir, id, masterpwd);
-                var iv = ReadSecret(keyDir, id, SecretType.IV);
-                var encryptedKey = ReadSecret(keyDir, id, SecretType.Key);
-                rijAlg.Key = TransformKey(encryptedKey, iv, masterpwd, TransformType.Decrypt);
-                rijAlg.IV = iv;
-                var cryptoTransform = rijAlg.CreateEncryptor();
-                var doc = new XmlDocument();
-                var rootElem = doc.CreateElement("PasswordRepository");
-                doc.AppendChild(rootElem);
-                AddElement(doc, rootElem, "Version", new Version(0, 5, 2).ToString());
-                AddElement(doc, rootElem, "Name", ConsoleUtils.Translate("PASSWORDS"));
-                AddElement(doc, rootElem, "Description", ConsoleUtils.Translate("PASSWORD_EXPORT_FROM_1", DateTime.Now.ToString(pattern, ci)));
-                var passwordsElem = doc.CreateElement("Passwords");
-                foreach (var pwd in pwdItems)
-                {
-                    var passwordElem = doc.CreateElement("Password");
-                    AddElement(doc, passwordElem, "Id", Guid.NewGuid().ToString());
-                    AddElement(doc, passwordElem, "Name", pwd.Name);
-                    AddElement(doc, passwordElem, "Description", pwd.Description);
-                    AddElement(doc, passwordElem, "Url", pwd.Url);
-                    var cipherLogin = Encrypt(cryptoTransform, pwd.Login);
-                    AddElement(doc, passwordElem, "CipherLogin", Convert.ToBase64String(cipherLogin));
-                    var cipherPassword = Encrypt(cryptoTransform, pwd.Password);
-                    AddElement(doc, passwordElem, "CipherPassword", Convert.ToBase64String(cipherPassword));
-                    passwordsElem.AppendChild(passwordElem);
-                }
-                rootElem.AppendChild(passwordsElem);
-                using (var ms = new MemoryStream())
-                {
-                    doc.Save(ms);
-                    ms.Seek(0, SeekOrigin.Begin);
-                    using (var fs = new FileStream(repositoryFile, FileMode.Create))
-                    {
-                        var header = new byte[6] { 23, 9, 78, 121, 108, 115 };
-                        fs.Write(header, 0, 6);
-                        var guid = new Guid(id);
-                        fs.Write(guid.ToByteArray(), 0, 16);
-                        Encrypt(cryptoTransform, ms, fs);
-                        ConsoleUtils.WriteInfo("INFO_WRITE_FILE_1", repositoryFile);
-                    }
-                }
+                var passwordElem = doc.CreateElement("Password");
+                AddElement(doc, passwordElem, "Id", Guid.NewGuid().ToString());
+                AddElement(doc, passwordElem, "Name", pwd.Name);
+                AddElement(doc, passwordElem, "Description", pwd.Description);
+                AddElement(doc, passwordElem, "Url", pwd.Url);
+                var cipherLogin = Encrypt(cryptoTransform, pwd.Login);
+                AddElement(doc, passwordElem, "CipherLogin", Convert.ToBase64String(cipherLogin));
+                var cipherPassword = Encrypt(cryptoTransform, pwd.Password);
+                AddElement(doc, passwordElem, "CipherPassword", Convert.ToBase64String(cipherPassword));
+                passwordsElem.AppendChild(passwordElem);
             }
+            rootElem.AppendChild(passwordsElem);
+            using var ms = new MemoryStream();
+            doc.Save(ms);
+            ms.Seek(0, SeekOrigin.Begin);
+            using var fs = new FileStream(repositoryFile, FileMode.Create);
+            var header = new byte[6] { 23, 9, 78, 121, 108, 115 };
+            fs.Write(header, 0, 6);
+            var guid = new Guid(id);
+            fs.Write(guid.ToByteArray(), 0, 16);
+            Encrypt(cryptoTransform, ms, fs);
+            ConsoleUtils.WriteInfo("INFO_WRITE_FILE_1", repositoryFile);
         }
 
         // --- copy
@@ -453,7 +447,7 @@ namespace CloudExport
             Queue<DocumentItem?> queue = new();
             queue.Enqueue(null);
             var targetFolderIdmap = new Dictionary<long, long>();
-            while (queue.Any())
+            while (queue.Count != 0)
             {
                 var currentFolder = queue.Dequeue();
                 var nextid = currentFolder?.id;
@@ -518,7 +512,7 @@ namespace CloudExport
 
         private static byte[] ReadSecret(string keyDirectory, string id, SecretType st)
         {
-            var keyfile = keyDirectory + "\\";
+            var keyfile = keyDirectory + Path.DirectorySeparatorChar;
             keyfile += st == SecretType.Key ? $"{id}.kv2" : $"{id}.iv";
             if (!File.Exists(keyfile))
             {
@@ -530,107 +524,88 @@ namespace CloudExport
         private static byte[] Read(string filename)
         {
             const int CHUNK_SIZE = 8192;
-            using (var ms = new MemoryStream())
+            using var ms = new MemoryStream();
+            using (var fs = new FileStream(filename, FileMode.Open))
             {
-                using (var fs = new FileStream(filename, FileMode.Open))
+                int readCount;
+                var buffer = new byte[CHUNK_SIZE];
+                while ((readCount = fs.Read(buffer, 0, buffer.Length)) != 0)
                 {
-                    int readCount;
-                    var buffer = new byte[CHUNK_SIZE];
-                    while ((readCount = fs.Read(buffer, 0, buffer.Length)) != 0)
-                    {
-                        ms.Write(buffer, 0, readCount);
-                    }
+                    ms.Write(buffer, 0, readCount);
                 }
-                return ms.ToArray();
             }
+            return ms.ToArray();
         }
 
         private static void WriteNewKey(string keyDirectory, string id, string securePassword)
         {
-            using (var rijAlg = Aes.Create())
+            using var rijAlg = Aes.Create();
+            rijAlg.KeySize = 256;
+            rijAlg.GenerateIV();
+            var ivFile = $"{keyDirectory}{Path.DirectorySeparatorChar}{id}.iv";
+            using (var fsiv = new FileStream(ivFile, FileMode.Create))
             {
-                rijAlg.KeySize = 256;
-                rijAlg.GenerateIV();
-                var ivFile = $"{keyDirectory}\\{id}.iv";
-                using (var fsiv = new FileStream(ivFile, FileMode.Create))
-                {
-                    fsiv.Write(rijAlg.IV, 0, rijAlg.IV.Length);
-                }
-                ConsoleUtils.WriteInfo("INFO_WRITE_FILE_1", ivFile);
-                rijAlg.GenerateKey();
-                var encryptedKey = TransformKey(rijAlg.Key, rijAlg.IV, securePassword, TransformType.Encrypt);
-                var keyFile = $"{keyDirectory}\\{id}.kv2";
-                using (var fskv = new FileStream(keyFile, FileMode.Create))
-                {
-                    fskv.Write(encryptedKey, 0, encryptedKey.Length);
-                }
-                ConsoleUtils.WriteInfo("INFO_WRITE_FILE_1", keyFile);
-                Array.Clear(encryptedKey, 0, encryptedKey.Length);
+                fsiv.Write(rijAlg.IV, 0, rijAlg.IV.Length);
             }
+            ConsoleUtils.WriteInfo("INFO_WRITE_FILE_1", ivFile);
+            rijAlg.GenerateKey();
+            var encryptedKey = TransformKey(rijAlg.Key, rijAlg.IV, securePassword, TransformType.Encrypt);
+            var keyFile = $"{keyDirectory}{Path.DirectorySeparatorChar}{id}.kv2";
+            using (var fskv = new FileStream(keyFile, FileMode.Create))
+            {
+                fskv.Write(encryptedKey, 0, encryptedKey.Length);
+            }
+            ConsoleUtils.WriteInfo("INFO_WRITE_FILE_1", keyFile);
+            Array.Clear(encryptedKey, 0, encryptedKey.Length);
         }
 
         private static byte[] TransformKey(byte[] key, byte[] iv, string pwd, TransformType t)
         {
-            using (var sha265 = SHA256.Create())
+            using var rijAlg = Aes.Create();
+            rijAlg.KeySize = 256;
+            var bytes = Encoding.UTF8.GetBytes(pwd);
+            rijAlg.Key = SHA256.HashData(bytes);
+            Array.Clear(bytes, 0, bytes.Length);
+            rijAlg.IV = iv;
+            using var destStream = new MemoryStream();
+            using (var sourceStream = new MemoryStream(key))
             {
-                using (var rijAlg = Aes.Create())
+                switch (t)
                 {
-                    rijAlg.KeySize = 256;
-                    var bytes = Encoding.UTF8.GetBytes(pwd);
-                    rijAlg.Key = sha265.ComputeHash(bytes);
-                    Array.Clear(bytes, 0, bytes.Length);
-                    rijAlg.IV = iv;
-                    using (var destStream = new MemoryStream())
-                    {
-                        using (var sourceStream = new MemoryStream(key))
-                        {
-                            switch (t)
-                            {
-                                case TransformType.Encrypt:
-                                    Encrypt(rijAlg.CreateEncryptor(), sourceStream, destStream);
-                                    break;
-                                case TransformType.Decrypt:
-                                    Decrypt(rijAlg.CreateDecryptor(), sourceStream, destStream);
-                                    break;
-                                default:
-                                    break;
-                            }
-                        }
-                        return destStream.ToArray();
-                    }
+                    case TransformType.Encrypt:
+                        Encrypt(rijAlg.CreateEncryptor(), sourceStream, destStream);
+                        break;
+                    case TransformType.Decrypt:
+                        Decrypt(rijAlg.CreateDecryptor(), sourceStream, destStream);
+                        break;
+                    default:
+                        break;
                 }
             }
+            return destStream.ToArray();
         }
 
         private static void Decrypt(ICryptoTransform cryptoTransform, Stream input, Stream output)
         {
-            using (var cs = new CryptoStream(input, cryptoTransform, CryptoStreamMode.Read))
-            {
-                cs.CopyTo(output);
-            }
+            using var cs = new CryptoStream(input, cryptoTransform, CryptoStreamMode.Read);
+            cs.CopyTo(output);
         }
 
         private static void Encrypt(ICryptoTransform cryptoTransform, Stream input, Stream output)
         {
-            using (var cs = new CryptoStream(output, cryptoTransform, CryptoStreamMode.Write))
-            {
-                input.CopyTo(cs);
-            }
+            using var cs = new CryptoStream(output, cryptoTransform, CryptoStreamMode.Write);
+            input.CopyTo(cs);
         }
 
         private static byte[] Encrypt(ICryptoTransform cryptoTransform, string plainText)
         {
-            using (var ms = new MemoryStream())
+            using var ms = new MemoryStream();
+            using var cs = new CryptoStream(ms, cryptoTransform, CryptoStreamMode.Write);
+            using (var sw = new StreamWriter(cs))
             {
-                using (var cs = new CryptoStream(ms, cryptoTransform, CryptoStreamMode.Write))
-                {
-                    using (var sw = new StreamWriter(cs))
-                    {
-                        sw.Write(plainText);
-                    }
-                    return ms.ToArray();
-                }
+                sw.Write(plainText);
             }
+            return ms.ToArray();
         }
 
         private static void AddElement(XmlDocument xmldoc, XmlElement parentelem, string elemname, string elemvalue)
@@ -642,7 +617,7 @@ namespace CloudExport
 
         private static string GetShortLocale(string locale)
         {
-            var idx = locale.IndexOf("-");
+            var idx = locale.IndexOf('-');
             if (idx > 0)
             {
                 locale = locale[..idx];
@@ -669,8 +644,7 @@ namespace CloudExport
 
         private static string GetFilename(string destDir, List<DocumentItem> items, DocumentItem current)
         {
-            List<string> path = new();
-            path.Add(NormalizeName(current.name));
+            List<string> path = [NormalizeName(current.name)];
             while (current.parentId != null)
             {
                 current = items.First(i => i.id == current.parentId);
@@ -678,7 +652,7 @@ namespace CloudExport
             }
             path.Add(destDir);
             path.Reverse();
-            return Path.Combine(path.ToArray());
+            return Path.Combine([.. path]);
         }
 
         private static byte[] Decrypt(byte[] data, string cryptKey, string salt)

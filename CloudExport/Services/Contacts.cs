@@ -1,6 +1,6 @@
 ﻿/*
     Myna Cloud Export
-    Copyright (C) 2022 Niels Stockfleth
+    Copyright (C) 2022-2025 Niels Stockfleth
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -15,6 +15,8 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+#pragma warning disable IDE1006 // Naming Styles
+
 namespace CloudExport.Services
 {
     public class Contacts
@@ -23,6 +25,6 @@ namespace CloudExport.Services
 
         public int version { get; set; }
 
-        public List<ContactItem>? items { get; set;}
+        public List<ContactItem>? items { get; set; }
     }
 }

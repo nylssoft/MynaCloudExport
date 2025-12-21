@@ -27,7 +27,7 @@ namespace CloudExport
         {
             WriteLabel(label);
             var ret = Console.ReadLine();
-            return ret != null ? ret : "";
+            return ret ?? "";
         }
 
         public static string ReadSecret(string label)
@@ -75,7 +75,7 @@ namespace CloudExport
 
         public static Dictionary<string, List<string>> ParseCommandLine(string[] args)
         {
-            Dictionary<string, List<string>> ret = new();
+            Dictionary<string, List<string>> ret = [];
             foreach (var arg in args)
             {
                 var key = "";
@@ -83,10 +83,10 @@ namespace CloudExport
                 var idx1 = arg.IndexOf("--");
                 if (idx1 >= 0)
                 {
-                    var idx2 = arg.IndexOf("=", idx1 + 2);
+                    var idx2 = arg.IndexOf('=', idx1 + 2);
                     if (idx2 > 0)
                     {
-                        key = arg[(idx1 + 2)..(idx2)].ToLowerInvariant();
+                        key = arg[(idx1 + 2)..idx2].ToLowerInvariant();
                         val = arg[(idx2 + 1)..];
                     }
                     else
@@ -100,7 +100,7 @@ namespace CloudExport
                 }
                 if (!ret.TryGetValue(key, out var l))
                 {
-                    l = new List<string>();
+                    l = [];
                     ret[key] = l;
                 }
                 l.Add(val);
@@ -144,7 +144,7 @@ namespace CloudExport
             if (!string.IsNullOrEmpty(label))
             {
                 Console.Write(label);
-                if (!label.EndsWith(":"))
+                if (!label.EndsWith(':'))
                 {
                     Console.Write(":");
                 }

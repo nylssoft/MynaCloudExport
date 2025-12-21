@@ -23,7 +23,7 @@ namespace CloudExport
 
         public CommandLine(string[] args)
         {
-             paramDict = new Dictionary<string, List<string>>();
+            paramDict = [];
             ParseCommandLine(args);
         }
 
@@ -57,7 +57,7 @@ namespace CloudExport
         public string? GetSingleOrDefaultSubcommand()
         {
             var l = GetSubcommands();
-            if (l != null && l.Count() == 1)
+            if (l != null && l.Count == 1)
             {
                 return l[0];
             }
@@ -66,29 +66,29 @@ namespace CloudExport
 
         public List<string>? GetSubcommands()
         {
-            return GetParameters("");            
+            return GetParameters("");
         }
 
         private void ParseCommandLine(string[] args)
         {
             string? lastParam = null;
-            List<string> subCommands = new();
-            List<string> lastArgs = new();
+            List<string> subCommands = [];
+            List<string> lastArgs = [];
             foreach (var arg in args)
             {
                 var param = arg;
-                if (param.StartsWith("-") && param.Length > 1 && param[1] != '-')
+                if (param.StartsWith('-') && param.Length > 1 && param[1] != '-')
                 {
                     if (lastParam != null)
                     {
                         paramDict[lastParam] = lastArgs;
-                        lastArgs = new();
+                        lastArgs = [];
                     }
                     lastParam = arg[1..].ToLowerInvariant();
                 }
                 else
                 {
-                    if (param.StartsWith("-") && arg.Length > 1)
+                    if (param.StartsWith('-') && arg.Length > 1)
                     {
                         param = arg[1..];
                     }
