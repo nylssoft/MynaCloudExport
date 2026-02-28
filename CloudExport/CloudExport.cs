@@ -367,6 +367,38 @@ namespace CloudExport
             ConsoleUtils.WriteInfo("INFO_WRITE_FILE_1", repositoryFile);
         }
 
+        /// <summary>
+        /// Fetch password items from the cloud, decrypting them for local use.
+        /// </summary>
+        public static async Task<List<PasswordItem>> FetchPasswordItemsAsync(string token, string key, string salt)
+        {
+            var encrypted = await RestClient.GetPasswordFileAsync(token);
+            var plainText = Decrypt(Convert.FromHexString(encrypted), key, salt);
+            var pwdItems = JsonSerializer.Deserialize<List<PasswordItem>>(plainText);
+            if (pwdItems == null) return new List<PasswordItem>();
+            foreach (var pwd in pwdItems)
+            {
+                pwd.Password = DecodeText(pwd.Password, key, salt);
+            }
+            return pwdItems;
+        }
+
+        /// <summary>
+        /// Save a complete list of password items back to the cloud, overwriting any existing
+        /// file for the user identified by the token.
+        /// </summary>
+        public static async Task SavePasswordItemsAsync(string token, string key, string salt, List<PasswordItem> items)
+        {
+            // encode and encrypt the item list using the same scheme ExportPasswordItemsAsync
+            foreach (var pwd in items)
+            {
+                pwd.Password = EncodeText(pwd.Password, key, salt);
+            }
+            var plainData = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(items));
+            var encodedData = Encrypt(plainData, key, salt);
+            await RestClient.SavePasswordFileAsync(token, Convert.ToHexString(encodedData));
+        }
+
         // --- copy
 
         public static async Task CopyNotesAsync(string token, string key, string salt, string targetToken, string targetKey, string targetSalt)
