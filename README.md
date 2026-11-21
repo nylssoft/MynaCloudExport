@@ -1,6 +1,13 @@
 # MynaCloudExport
+
+> **Deprecated — no longer maintained**
+>
+> Development of this project has ended. It receives no bug fixes or security updates. Existing releases may become incompatible with newer API versions.
+>
+> Use the [stockfleth.eu portal](https://stockfleth.eu/desktop/) instead. Under **Settings**, choose **Export data** or **Import data** to back up and restore your data. See the [portal documentation](https://github.com/nylssoft/TsMynaPortal#back-up-and-restore-your-data) for supported archive formats; backups created by this legacy tool are not guaranteed to be compatible with the portal's importer.
+
  Command line tool to export user data stored in the website [stockfleth.eu](https://www.stockfleth.eu).
- 
+
  The first argument specify which items should be exported into the file system.
  Use 'all' to export documents, notes, passwords, contacts and the diary or 'documents', 'notes', 'passwords', 'contacts' or 'diary' to export only the specified type.
  If no further arguments are specified the user name and the password must be entered.
